@@ -69,9 +69,9 @@ char displaybuffer[5] = "0000";
 // rotary encoder
 // outputs on pins 0 and 1
 Rotary rotary = Rotary(0, 1);
-int clickCounter = 0;
+volatile int clickCounter = 0;
 int clickCounterLast = 0;
-unsigned int fakeRpmCounter = 0;
+volatile unsigned int fakeRpmCounter = 0;
 unsigned int fakeRpmCounterLast = 0;
 
 // button on rotary encoder
@@ -99,7 +99,6 @@ boolean lastSetItemState = false;
 volatile int setItemPos = 0;
 
 //configuration for the Tachometer variables
-#include <FreqMeasure.h>
 #define tachPin 7 // int 3 is pin 7 in micro
 
 byte rpmArraySize = 3;  // 3 values
@@ -108,7 +107,7 @@ byte rpmArrayIdx = 0;
 byte rpmIdx = 0;
 unsigned int rpm = 1000;
 unsigned int rpmTotal = 0;
-unsigned int revs = 0;
+volatile unsigned int revs = 0;
 unsigned long nowTime = micros();
 unsigned long lastTime = 0;
 unsigned long elapsedTime;
@@ -193,7 +192,7 @@ void setup() {
   // rotary encoder setup
   pinMode(encoder0PinA, INPUT_PULLUP);
   pinMode(encoder0PinB, INPUT_PULLUP);
-  pinMode(tachPin, INPUT);
+  pinMode(tachPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(encoder0PinA), rotate, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoder0PinB), rotate, CHANGE);
   attachInterrupt(digitalPinToInterrupt(tachPin), tachISR, RISING);
@@ -225,7 +224,7 @@ void loop() {
       elapsedTime = nowTime - lastTime; 
       lastTime = nowTime;
               //   secs/min microsec/sec
-      rpm = revs * ( 60 * 1000000 ) / elapsedTime / cylinderDivider;
+      rpm = (unsigned long)revs * 60000000UL / elapsedTime / cylinderDivider;
       rpmArray[rpmIdx] = rpm;
       rpmIdx++;
       if ( rpmIdx > 2 ) {
@@ -249,7 +248,8 @@ void loop() {
       rpm = fakeRpmCounter;
   }
 
-  Serial.println("revs: " + String(revs) + " rpm: " + String(rpm) + " now time: " + String(nowTime) + " last time: " + String(lastTime) + " elapsed time: " + String(elapsedTime));
+  if ( verbose )
+    Serial.println("revs: " + String(revs) + " rpm: " + String(rpm) + " now time: " + String(nowTime) + " last time: " + String(lastTime) + " elapsed time: " + String(elapsedTime));
   
   // THIS CALL PUSHES THE RPM VALUE TO THE DISPLAYS
   lightItUp(); // use the value of RPM to light up the neopixel bar
@@ -399,12 +399,6 @@ void loop() {
           Settings.color_shift_secondary += 4;
         } else if ( clickCounter < clickCounterLast ) {
           Settings.color_shift_secondary -= 4;
-        }
-        if ( Settings.brightness < 8 ) {
-          Settings.brightness = 252;
-        }
-        if ( Settings.brightness > 252 ) {
-          Settings.brightness = 8;
         }
         clickCounterLast = clickCounter;
         snprintf(displaybuffer, sizeof(displaybuffer), "%04d", Settings.color_shift_secondary);
@@ -991,7 +985,7 @@ bool loadConfig() {
   }
   String("____").toCharArray(displaybuffer, 5);
   alpha4print();
-  return (Settings.version == CONFIG_VERSION);
+  return strncmp(Settings.version, CONFIG_VERSION, sizeof(Settings.version)) == 0;
 }
 
 void saveConfig() {
