@@ -1,4 +1,4 @@
-bool verbose = true;
+bool verbose = false;
 bool tachDisplay = true;
 
 // eeprom
@@ -10,7 +10,6 @@ int configAddress = 0;
 // Thank you AdaFruit!
 // neopixel
 #include <Adafruit_NeoPixel.h>
-#include <avr/power.h>
 // alpha-quad
 #include <Wire.h>
 #include "Adafruit_LEDBackpack.h"
@@ -454,15 +453,6 @@ void loop() {
   prevSetItemState = setItemState;
 }
 
-// Fill the dots one after the other with a color
-void colorWipe(uint32_t c, uint8_t wait) {
-  for (uint16_t i = 0; i < strip.numPixels(); i++) {
-    strip.setPixelColor(i, c);
-    strip.show();
-    delay(wait);
-  }
-}
-
 // flood all pixels with a color at the given brightness
 void colorFill(uint32_t c, uint8_t brightness) {
   for (uint16_t i = 0; i < strip.numPixels(); i++) {
@@ -582,51 +572,6 @@ void rainbow(uint8_t wait) {
   }
 }
 
-// Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-  for (j = 0; j < 250 * 2; j++) {
-    for (i = 0; i < strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
-      strip.setBrightness( (j / 5 / 16) + 64);
-    }
-    strip.show();
-    delay(wait);
-  }
-}
-
-// Theatre-style crawling lights.
-void theaterChase(uint32_t c, uint8_t wait) {
-  for (int j = 0; j < 10; j++) {
-    for (int q = 0; q < 3; q++) {
-      for (int i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i + q, c);
-      }
-      strip.show();
-      delay(wait);
-      for (int i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i + q, 0);
-      }
-    }
-  }
-}
-
-// Theatre-style crawling lights with rainbow effect
-void theaterChaseRainbow(uint8_t wait) {
-  for (int j = 0; j < 256; j++) {
-    for (int q = 0; q < 3; q++) {
-      for (int i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i + q, Wheel( (i + j) % 255));
-      }
-      strip.show();
-      delay(wait);
-      for (int i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i + q, 0);
-      }
-    }
-  }
-}
-
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
 uint32_t Wheel(byte WheelPos) {
@@ -653,14 +598,6 @@ uint32_t Wheel(byte WheelPos) {
 void alpha4print( void ) {
   for (int i = 0; i < 4; i++ ) {
     alpha4.writeDigitAscii(i, displaybuffer[i]);
-  }
-  alpha4.writeDisplay();
-  delay(25);
-}
-
-void alpha4printraw( void ) {
-  for (int i = 0; i < 4; i++ ) {
-    alpha4.writeDigitRaw(i, displaybuffer[i]);
   }
   alpha4.writeDisplay();
   delay(25);
