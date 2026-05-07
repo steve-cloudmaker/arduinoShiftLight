@@ -121,9 +121,8 @@ void setup() {
 
   EEPROM.setMemPool(MEMORY_BASE, EEPROMSizeMicro);
   configAddress = EEPROM.getAddress(sizeof(SettingsStruct));
-  loadConfig();
-
   alpha4.begin(0x70);
+  loadConfig();
   alpha4.setBrightness(Settings.brightness / 16);
   alpha4DashChase();
   strcpy(displaybuffer, "boot");
@@ -258,7 +257,7 @@ void loop() {
         alpha4.setBrightness(Settings.brightness / 16);
         snprintf(displaybuffer, sizeof(displaybuffer), "%04d", Settings.brightness);
         alpha4print();
-        colorFill(Wheel(Settings.color_primary), Settings.brightness);
+        colorFill(Wheel(Settings.color_primary));
         break;
       case 2: // enable rpm
         if ( clickCounter > clickCounterLast && Settings.enable_rpm <= Settings.shift_rpm - 200 ) {
@@ -289,7 +288,7 @@ void loop() {
         clickCounterLast = clickCounter;
         snprintf(displaybuffer, sizeof(displaybuffer), "%04d", Settings.color_primary);
         alpha4print();
-        colorFill(Wheel(Settings.color_primary), Settings.brightness);
+        colorFill(Wheel(Settings.color_primary));
         break;
       case 5: // color 2
         if ( clickCounter > clickCounterLast ) {
@@ -300,7 +299,7 @@ void loop() {
         clickCounterLast = clickCounter;
         snprintf(displaybuffer, sizeof(displaybuffer), "%04d", Settings.color_secondary);
         alpha4print();
-        colorFill(Wheel(Settings.color_secondary), Settings.brightness);
+        colorFill(Wheel(Settings.color_secondary));
         break;
       case 6: // color 3
         if ( clickCounter > clickCounterLast ) {
@@ -311,7 +310,7 @@ void loop() {
         clickCounterLast = clickCounter;
         snprintf(displaybuffer, sizeof(displaybuffer), "%04d", Settings.color_tertiary);
         alpha4print();
-        colorFill(Wheel(Settings.color_tertiary), Settings.brightness);
+        colorFill(Wheel(Settings.color_tertiary));
         break;
       case 7: // shift color 1
         if ( clickCounter > clickCounterLast ) {
@@ -322,7 +321,7 @@ void loop() {
         clickCounterLast = clickCounter;
         snprintf(displaybuffer, sizeof(displaybuffer), "%04d", Settings.color_shift_primary);
         alpha4print();
-        colorFill(Wheel(Settings.color_shift_primary), Settings.brightness);
+        colorFill(Wheel(Settings.color_shift_primary));
         break;
       case 8: // shift color 2
         if ( clickCounter > clickCounterLast ) {
@@ -333,7 +332,7 @@ void loop() {
         clickCounterLast = clickCounter;
         snprintf(displaybuffer, sizeof(displaybuffer), "%04d", Settings.color_shift_secondary);
         alpha4print();
-        colorFill(Wheel(Settings.color_shift_secondary), Settings.brightness);
+        colorFill(Wheel(Settings.color_shift_secondary));
         break;
       case 9: // fake rpm
         if ( clickCounter > clickCounterLast ) {
@@ -456,7 +455,7 @@ void loop() {
 }
 
 // flood all pixels with a color at the given brightness
-void colorFill(uint32_t c, uint8_t brightness) {
+void colorFill(uint32_t c) {
   for (uint16_t i = 0; i < strip.numPixels(); i++) {
     strip.setPixelColor(i, c);
   }
