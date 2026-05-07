@@ -111,9 +111,9 @@ bool shiftFlashState = false;
 
  */
 void setup() {
-  Serial.begin(115200);
 
   if ( verbose ) {
+    Serial.begin(115200);
     delay(1000);
     Serial.println(F("hello world"));
     delay(1000);
@@ -131,6 +131,7 @@ void setup() {
   delay(100);
 
   strip.begin();
+  strip.setBrightness(Settings.brightness);
   strip.show(); // Initialize all pixels to 'off'
   rainbow(5);
   delay(100);
@@ -167,6 +168,7 @@ void setup() {
 */
 void loop() {
   delay(10);
+  byte rpmArrayIdx = 0;
 
   if ( fakeRPM == false ) {
     nowTime = micros();
@@ -269,7 +271,7 @@ void loop() {
         alpha4print();
         break;
       case 3: // shift rpm
-        if ( clickCounter > clickCounterLast && Settings.shift_rpm <= 9000 ) {
+        if ( clickCounter > clickCounterLast && Settings.shift_rpm < 9000 ) {
           Settings.shift_rpm += 100;
         } else if ( clickCounter < clickCounterLast && Settings.shift_rpm > Settings.enable_rpm ) {
           Settings.shift_rpm -= 100;
@@ -458,7 +460,7 @@ void colorFill(uint32_t c, uint8_t brightness) {
   for (uint16_t i = 0; i < strip.numPixels(); i++) {
     strip.setPixelColor(i, c);
   }
-  strip.setBrightness(brightness);
+  strip.setBrightness(Settings.brightness);
   strip.show();
 }
 
@@ -499,7 +501,7 @@ void lightItUp(void) {
 
   // rpm range / number of dots = rpm per dot
   int dotSize = (Settings.shift_rpm - Settings.enable_rpm) / numPixels;
-  int dotCount = (rpm - Settings.enable_rpm) / dotSize;
+  int dotCount = constrain((rpm - Settings.enable_rpm) / dotSize, 0, numPixels - 1);
 
   switch (displayStyle) {
     case 0: // dot
@@ -562,7 +564,6 @@ void blackout(void) {
 
 void rainbow(uint8_t wait) {
   uint16_t i, j;
-  strip.setBrightness(32);
   for (j = 0; j < 256; j++) {
     for (i = 0; i < strip.numPixels(); i++) {
       strip.setPixelColor(i, Wheel((i + j) & 255));
@@ -684,6 +685,7 @@ void handleEvent(AceButton* /* button */, uint8_t eventType, uint8_t /* buttonSt
         setItemState = true;
       } else {
         menuState = true;
+        lastMenuPos = -1; // force label redraw on menu entry
       }
       break;
   }
@@ -718,6 +720,8 @@ bool loadConfig() {
     Settings.enable_rpm = 6500;
   if ( Settings.shift_rpm > 9000 )
     Settings.shift_rpm = 7500;
+  if ( Settings.enable_rpm >= Settings.shift_rpm ) // prevent division by zero in lightItUp
+    Settings.enable_rpm = Settings.shift_rpm - 500;
   if ( verbose ) {
     Serial.print(F(" brt: ")); Serial.print(Settings.brightness, HEX);
     Serial.print(F(" enab: ")); Serial.print(Settings.enable_rpm);
@@ -730,6 +734,7 @@ bool loadConfig() {
   }
   strcpy(displaybuffer, "____");
   alpha4print();
+  strip.setBrightness(Settings.brightness);
   return strncmp(Settings.version, CONFIG_VERSION, sizeof(Settings.version)) == 0;
 }
 
